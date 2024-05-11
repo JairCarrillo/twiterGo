@@ -1,6 +1,15 @@
-@echo off
-set GOARCH=amd64
+git add .
+
+git commit -m "ultimo commit"
+
+git push
+
 set GOOS=linux
-go build main.go
+
+set GOARCH=amd64
+
+go buil main.go
+
 del main.zip
-powershell Compress-Archive -Path main -DestinationPath main.zip
+
+tar.exe -a -cf main.zip main
