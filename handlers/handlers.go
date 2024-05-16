@@ -16,7 +16,7 @@ func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) mod
 	var r models.RespApi
 	r.Status = 400
 
-	isOK, statusCode, msg, _ := validoAuthorization(ctx, request)
+	isOK, statusCode, msg, claim := validoAuthorization(ctx, request)
 	if !isOK {
 		r.Status = statusCode
 		r.Message = msg
@@ -29,22 +29,31 @@ func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) mod
 		case "registro":
 			return routers.Registro(ctx)
 		case "login":
-			return routers.login(ctx)
+			return routers.Login(ctx)
+		case "tweet":
+			return routers.GraboTweet(ctx, claim)
+		case "subirAvatar":
+			return routers.UploadImage(ctx, "A", request, claim)
 		}
 		//
 	case "GET":
 		switch ctx.Value(models.Key("path")).(string) {
-
+		case "verperfil":
+			return routers.VerPerfil(request)
+		case "leoTweets":
+			return routers.LeoTweets(request)
 		}
 		//
 	case "PUT":
 		switch ctx.Value(models.Key("path")).(string) {
-
+		case "modificarPerfil":
+			return routers.ModificarPerfil(ctx, claim)
 		}
 		//
 	case "DELETE":
 		switch ctx.Value(models.Key("path")).(string) {
-
+		case "eliminarTweet":
+			return routers.EliminarTweet(request, claim)
 		}
 		//
 	}
