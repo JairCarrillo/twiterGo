@@ -1,6 +1,5 @@
 @echo off
 set GOARCH=amd64
 set GOOS=linux
-go build main.go
-del main.zip
+go build -o main main.go
 powershell Compress-Archive -Path main -DestinationPath main.zip
