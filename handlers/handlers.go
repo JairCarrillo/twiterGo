@@ -50,6 +50,12 @@ func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) mod
 			return routers.ObtenerImagen(ctx, "A", request, claim)
 		case "obtenerBanner":
 			return routers.ObtenerImagen(ctx, "B", request, claim)
+		case "ConsultaRelacion":
+			return routers.ConsultaRelacion(request, claim)
+		case "listaUsuarios":
+			return routers.ListaUsuarios(request, claim)
+		case "leoTweetsSeguidores":
+			return routers.LeoTweetsSeguidores(request, claim)
 		}
 		//
 	case "PUT":
