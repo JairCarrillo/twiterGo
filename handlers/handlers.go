@@ -10,12 +10,14 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
+// Manejadores es la función principal que maneja las solicitudes entrantes.
 func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) models.RespApi {
 	fmt.Println("Voy a procesar " + ctx.Value(models.Key("path")).(string) + " > " + ctx.Value(models.Key("method")).(string))
 
 	var r models.RespApi
 	r.Status = 400
 
+	// Verifica la autorización de la solicitud.
 	isOK, statusCode, msg, claim := validoAuthorization(ctx, request)
 	if !isOK {
 		r.Status = statusCode
@@ -23,6 +25,7 @@ func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) mod
 		return r
 	}
 
+	// Maneja las solicitudes POST.
 	switch ctx.Value(models.Key("method")).(string) {
 	case "POST":
 		switch ctx.Value(models.Key("path")).(string) {
@@ -39,8 +42,8 @@ func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) mod
 		case "subirBanner":
 			return routers.UploadImage(ctx, "B", request, claim)
 		}
-		//
 	case "GET":
+		// Maneja las solicitudes GET.
 		switch ctx.Value(models.Key("path")).(string) {
 		case "verperfil":
 			return routers.VerPerfil(request)
@@ -57,27 +60,28 @@ func Manejadores(ctx context.Context, request events.APIGatewayProxyRequest) mod
 		case "leoTweetsSeguidores":
 			return routers.LeoTweetsSeguidores(request, claim)
 		}
-		//
 	case "PUT":
+		// Maneja las solicitudes PUT.
 		switch ctx.Value(models.Key("path")).(string) {
 		case "modificarPerfil":
 			return routers.ModificarPerfil(ctx, claim)
 		}
 		//
 	case "DELETE":
+		// Maneja las solicitudes DELETE.
 		switch ctx.Value(models.Key("path")).(string) {
 		case "eliminarTweet":
 			return routers.EliminarTweet(request, claim)
 		case "bajaRelacion":
 			return routers.BajaRelacion(request, claim)
 		}
-		//
 	}
 
 	r.Message = "Method Invalid"
 	return r
-
 }
+
+// validoAuthorization verifica si la solicitud tiene una autorización válida.
 func validoAuthorization(ctx context.Context, request events.APIGatewayProxyRequest) (bool, int, string, models.Claim) {
 	path := ctx.Value(models.Key("path")).(string)
 	if path == "registro" || path == "login" || path == "obtenerAvatar" || path == "obtenerBanner" {
@@ -86,7 +90,7 @@ func validoAuthorization(ctx context.Context, request events.APIGatewayProxyRequ
 
 	token := request.Headers["Authorization"]
 	if len(token) == 0 {
-		return false, 401, "Token re---querido", models.Claim{}
+		return false, 401, "Token requerido", models.Claim{}
 	}
 
 	claim, todoOK, msg, err := jwt.ProcesoToken(token, ctx.Value(models.Key("jwtSign")).(string))
