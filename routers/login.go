@@ -12,43 +12,54 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
+// Login maneja la solicitud de inicio de sesión de un usuario.
+// Retorna una respuesta con el estado de la operación y, en caso de éxito, un token JWT.
 func Login(ctx context.Context) models.RespApi {
 	var t models.Usuario
 	var r models.RespApi
 	r.Status = 400
 
+	// Obtener el cuerpo de la solicitud.
 	body := ctx.Value(models.Key("body")).(string)
 	err := json.Unmarshal([]byte(body), &t)
 	if err != nil {
-		r.Message = "Usuario y/o Contraseña Inválidos" + err.Error()
+		r.Message = "Usuario y/o Contraseña Inválidos: " + err.Error()
 		return r
 	}
+
+	// Validar que el email no esté vacío.
 	if len(t.Email) == 0 {
 		r.Message = "El email del usuario es requerido"
 		return r
 	}
+
+	// Intentar iniciar sesión con los datos proporcionados.
 	userData, existe := bd.IntentoLogin(t.Email, t.Password)
 	if !existe {
-		r.Message = "Usuario y/o Contraseña Inválidos "
+		r.Message = "Usuario y/o Contraseña Inválidos"
 		return r
 	}
 
+	// Generar el token JWT.
 	jwtKey, err := jwt.GeneroJWT(ctx, userData)
 	if err != nil {
-		r.Message = "Ocurrió un error al intentar generar el token correspondiente > " + err.Error()
+		r.Message = "Error al generar el token: " + err.Error()
 		return r
 	}
 
+	// Crear la respuesta con el token.
 	resp := models.RespuestaLogin{
 		Token: jwtKey,
 	}
 
-	token, err2 := json.Marshal(resp)
-	if err2 != nil {
-		r.Message = "Ocurrió un error al intentar formatear el token a JSON > " + err2.Error()
+	// Convertir la respuesta a JSON.
+	token, err := json.Marshal(resp)
+	if err != nil {
+		r.Message = "Error al formatear el token a JSON: " + err.Error()
 		return r
 	}
 
+	// Crear una cookie con el token.
 	cookie := &http.Cookie{
 		Name:    "token",
 		Value:   jwtKey,
@@ -56,6 +67,7 @@ func Login(ctx context.Context) models.RespApi {
 	}
 	cookieString := cookie.String()
 
+	// Configurar la respuesta de la API.
 	res := &events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       string(token),
@@ -66,6 +78,7 @@ func Login(ctx context.Context) models.RespApi {
 		},
 	}
 
+	// Configurar la respuesta de la función.
 	r.Status = 200
 	r.Message = string(token)
 	r.CustomResp = res
